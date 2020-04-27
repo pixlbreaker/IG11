@@ -7,6 +7,7 @@ from discord.ext import commands
 ##########################
 # Manage Commands
 ##########################
+
 class Manage(commands.Cog):
 
     def __init__(self, bot):

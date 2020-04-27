@@ -1,5 +1,9 @@
 import discord
-from discord.ext import commands
+import pafy
+import youtube_dl
+from discord.ext import tasks, commands
+from discord import FFmpegPCMAudio
+from discord.utils import get
 
 ############################
 #   Soundboard Cog
@@ -9,10 +13,21 @@ class Soundboard(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.play_queue.start()
     
     @commands.Cog.listener()
     async def on_ready(self):
         print('... Added Soundboard Cog...')
+
+    @tasks.loop(seconds=5.0)
+    async def play_queue(self):
+        # Checks if the bot is playing music
+        voice_client: discord.VoiceClient = discord.utils.get(self.bot.voice_clients)
+        if len(self.songs) > 0 and not voice_client.is_playing():
+
+            # Plays the audio in the channel
+            audio_info = self.songs.pop()
+            self.__playsong__(audio_info[0], audio_info[1])
     
     @commands.command(pass_context=True)
     async def bitconnect(self, ctx):
@@ -36,6 +51,7 @@ class Soundboard(commands.Cog):
                 await ctx.send("Joined channel")
         except:
             await ctx.send("You are not connected to a channel")
+    
         
 
 
