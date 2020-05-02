@@ -2,6 +2,7 @@ import discord
 import pafy
 import youtube_dl
 import os
+from urllib.request import Request, urlopen
 from discord.ext import tasks, commands
 from discord import FFmpegPCMAudio
 from discord.utils import get
@@ -28,7 +29,7 @@ class Soundboard(commands.Cog):
         audio_source = discord.FFmpegPCMAudio(audio_path)
 
         await ctx.send("Playing audio")
-        await voice_client.play(audio_source, after=None)
+        voice_client.play(audio_source, after=None)
     
 
     @commands.Cog.listener()
@@ -72,28 +73,31 @@ class Soundboard(commands.Cog):
     async def soundlist(self, ctx):
         """
         """
-        await ctx.send("This is a list of all the avaiable sounds")
+        await ctx.send("This is a list of all the avaiable sounds:")
         for filename in os.listdir('./sound'):
             await ctx.send(filename)
         
-        
     
-    # @commands.command(pass_context=True)
-    # async def join(self, ctx):
-    #     """Joins the users channel"""
-    #     try:
-    #         channel = ctx.message.author.voice.channel
-    #         voice = get(self.bot.voice_clients, guild=ctx.guild)
-    #         if voice and voice.is_connected():
-    #             await voice.move_to(channel)
-    #             await ctx.send("Moved channel")
-    #         else:
-    #             voice = await channel.connect()
-    #             await ctx.send("Joined channel")
-    #     except:
-    #         await ctx.send("You are not connected to a channel")
-    
+    @commands.command(pass_context=True)
+    async def addsound(self, ctx):
+        """
+        """
+        file_name = ctx.message.attachments[0].filename
+        file_type = file_name.split(".")[-1]
         
+        if file_type == "mp3" or file_type == "wav" or file_type == "ogg":
+            # File information and writes it to the file
+            file_loc = ctx.message.attachments[0].url
+            req = Request(file_loc, headers={'User-Agent': 'Mozilla/5.0'})
+            webpage = urlopen(req).read()
+            file_write = open("sound\\" + file_name, "wb")
+            file_write.write(webpage)
+            file_write.close()
+
+            name = file_name.split(".")[0]
+            await ctx.send(name + " has been added")
+        else:
+            await ctx.send("You have not given the right file type.")
 
 
 def setup(bot):
