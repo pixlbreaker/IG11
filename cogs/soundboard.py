@@ -15,19 +15,25 @@ class Soundboard(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        #self.play_queue.start()
     
     async def __playaudio__(self, ctx, audio_path):
+
+        # Gets the channel and the voice information
         channel = ctx.message.author.voice.channel
         voice = get(self.bot.voice_clients, guild=ctx.guild)
         if voice and voice.is_connected():
             await voice.move_to(channel)
         else:
             voice = await channel.connect()
+
+        # Guild and voice client
         guild = ctx.guild
         voice_client: discord.VoiceClient = discord.utils.get(self.bot.voice_clients, guild=guild)
+
+        # The audio source
         audio_source = discord.FFmpegPCMAudio(audio_path)
 
+        # Plays the audio
         await ctx.send("Playing audio")
         voice_client.play(audio_source, after=None)
     
@@ -35,52 +41,45 @@ class Soundboard(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print('... Added Soundboard Cog...')
-
-    @tasks.loop(seconds=5.0)
-    async def play_queue(self):
-        # Checks if the bot is playing music
-        voice_client: discord.VoiceClient = discord.utils.get(self.bot.voice_clients)
-        # if len(self.songs) > 0 and not voice_client.is_playing():
-
-        #     # Plays the audio in the channel
-        #     audio_info = self.songs.pop()
-        #     self.__playsong__(audio_info[0], audio_info[1])
     
-    @commands.command(pass_context=True)
-    async def bitconnect(self, ctx):
-        """
-        Plays the bitconnect sound
-        """
-        await ctx.send("Bitconnect")
-        channel = ctx.message.author.voice.channel
-        voice = get(self.bot.voice_clients, guild=ctx.guild)
-        audio_path = "sound/bitconnect.mp3"
-        await self.__playaudio__(ctx, audio_path)
 
     @commands.command(pass_context=True)
     async def p(self, ctx, name):
         """
+        Lets you play a soundclip. Use '!p soundname' to play the sound in the audio chat.
         """
-        l = os.listdir('./sound')
-        li=[x.split('.')[0] for x in l]
-        i = li.index(name)
-        audio_path = "sound/" + l[i]
-        await self.__playaudio__(ctx, audio_path)
+        try:
+            # Finds the audio clip from the name
+            l = os.listdir('./sound')
+            li=[x.split('.')[0] for x in l]
+            i = li.index(name)
+            audio_path = "sound/" + l[i]
+            await self.__playaudio__(ctx, audio_path)
+        except:
+            await ctx.send("The audio clip does not exist.")
         
 
     
     @commands.command(pass_context=True,)
     async def soundlist(self, ctx):
         """
+        Gives a list of all the sound files for the soundboard
         """
         await ctx.send("This is a list of all the avaiable sounds:")
+        await ctx.send("Please wait ... ")
+        sounds = "```"
         for filename in os.listdir('./sound'):
-            await ctx.send(filename)
+            sounds = sounds + filename + "\n"
+        sounds = sounds + "```"
+
+        await ctx.send(sounds)
+        
         
     
     @commands.command(pass_context=True)
     async def addsound(self, ctx):
         """
+        Adds a new sound to the soundboard. Uses only .mp3, .wav, .ogg
         """
         file_name = ctx.message.attachments[0].filename
         file_type = file_name.split(".")[-1]
